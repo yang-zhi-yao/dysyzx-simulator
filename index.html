@@ -1,0 +1,951 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>东营市实验中学 · 五四制运营模拟器</title>
+    <link rel="icon" type="image/png" href="https://cdn.luogu.com.cn/upload/image_hosting/fi8causa.png">
+    <style>
+        /* 中性主题变量 (默认深色) */
+        :root {
+            --bg: #1a2629;
+            --surface: #233136;
+            --primary: #3f6a7a;
+            --primary-light: #5b8c9e;
+            --text: #e2e8f0;
+            --text-secondary: #a0b8c2;
+            --success: #479e6b;
+            --warning: #d99b3a;
+            --danger: #c05a5a;
+            --border: #334e57;
+            --card-bg: #1f3138;
+            --log-bg: #1a2a30;
+            --input-bg: #2a3f48;
+        }
+
+        /* 浅色主题 (中性灰白) */
+        body.light {
+            --bg: #f5f7fa;
+            --surface: #ffffff;
+            --primary: #3a6f81;
+            --primary-light: #558da1;
+            --text: #1e2e36;
+            --text-secondary: #3f5560;
+            --success: #2f7a4f;
+            --warning: #b87c2a;
+            --danger: #b34747;
+            --border: #cbd5e0;
+            --card-bg: #f0f4f8;
+            --log-bg: #e9eef3;
+            --input-bg: #ffffff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: row;
+            overflow: hidden;
+            transition: background 0.2s, color 0.2s;
+        }
+
+        /* 手机适配：宽度小于800px时改为纵向 */
+        @media (max-width: 800px) {
+            body {
+                flex-direction: column;
+                overflow: auto;
+            }
+            .sidebar {
+                width: 100% !important;
+                border-right: none !important;
+                border-bottom: 1px solid var(--border);
+                max-height: 60vh;
+            }
+            .main {
+                height: auto;
+                min-height: 40vh;
+            }
+            .theme-toggle {
+                top: 10px;
+                right: 15px;
+            }
+        }
+
+        .sidebar {
+            width: 360px;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding: 1.5rem 1rem;
+            gap: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 30px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            width: 48px;
+            height: 48px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 1.2rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            font-size: 0.95rem;
+        }
+        .stat-value {
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.2rem;
+            color: var(--primary-light);
+        }
+        .badge {
+            background: var(--primary);
+            color: white;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+        }
+
+        .progress {
+            height: 6px;
+            background: var(--border);
+            border-radius: 6px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: var(--warning);
+            width: 0%;
+        }
+
+        .forecast-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            padding: 0.3rem 0;
+            border-bottom: 1px dashed var(--border);
+        }
+        .income { color: var(--success); }
+        .expense { color: var(--danger); }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 0.6rem 1.2rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: 0.15s;
+            border: 1px solid transparent;
+            font-size: 0.9rem;
+        }
+        button:hover {
+            background: var(--primary-light);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+        button:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+        .btn-small {
+            padding: 0.3rem 0.8rem;
+            font-size: 0.8rem;
+            border-radius: 30px;
+        }
+        .btn-warning {
+            background: var(--warning);
+            color: #1e2e36;
+        }
+        .btn-success {
+            background: var(--success);
+        }
+
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .tab {
+            padding: 0.5rem 1.2rem;
+            border-radius: 30px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .tab.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .panel { display: none; }
+        .panel.active { display: block; }
+
+        .action-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .log-area {
+            background: var(--log-bg);
+            border-radius: 18px;
+            padding: 1rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            margin-top: 1.5rem;
+        }
+        .log-entry {
+            padding: 0.2rem 0;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-secondary);
+        }
+        .log-bad { color: var(--danger); }
+        .log-good { color: var(--success); }
+        .log-warn { color: var(--warning); }
+
+        .warning-banner {
+            background: rgba(192, 90, 90, 0.15);
+            border: 1px solid var(--danger);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: none;
+            font-weight: 600;
+            color: var(--danger);
+        }
+
+        .edu-item {
+            background: var(--surface);
+            border-radius: 16px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 5px solid var(--primary);
+        }
+    </style>
+</head>
+<body>
+<div class="theme-toggle" id="themeToggle" title="切换主题">🌓</div>
+
+<!-- 侧边栏 -->
+<div class="sidebar">
+    <div class="card" style="background: var(--primary); color: white; text-align: center;">
+        <h2 style="margin:0;">🏫 东营市实验中学</h2>
+        <div style="opacity:0.9;">五四制 · 1994秋 → 2026夏 (季度制)</div>
+    </div>
+
+    <div class="card">
+        <div class="stat-row"><span>📅 当前季度</span><span class="stat-value" id="dateDisplay">1994 秋</span></div>
+        <div class="stat-row"><span>💰 资金</span><span class="stat-value" id="moneyDisplay">1,000,000</span></div>
+        <div class="stat-row"><span>⭐ 声誉</span><span class="stat-value" id="repDisplay">0.50</span></div>
+        <div class="progress"><div class="progress-fill" id="repBar" style="width:50%"></div></div>
+        <div class="stat-row"><span>⚠️ 危机计数</span><span class="stat-value" id="crisisCount">0 / 5</span></div>
+    </div>
+
+    <div class="card">
+        <h3>🔮 下季度预测</h3>
+        <div class="forecast-item"><span>总收入</span><span class="income" id="fcIncome">+0</span></div>
+        <div class="forecast-item"><span>工资支出</span><span class="expense" id="fcSalary">-0</span></div>
+        <div class="forecast-item"><span>维护支出</span><span class="expense" id="fcMaint">-0</span></div>
+        <div class="forecast-item" style="border-bottom:none; font-weight:600;"><span>净收支</span><span id="fcNet">0</span></div>
+    </div>
+
+    <div class="card">
+        <div class="stat-row"><span>⚡ 行动力</span><span class="stat-value" id="apDisplay">300</span></div>
+        <div class="stat-row"><span>📚 教研点</span><span class="stat-value" id="rdDisplay">0</span></div>
+        <div class="stat-row"><span>🎓 学术点</span><span class="stat-value" id="acadDisplay">0</span></div>
+        <div class="stat-row"><span>👪 家委点</span><span class="stat-value" id="commDisplay">0</span></div>
+    </div>
+
+    <div class="card">
+        <h3>📊 师生统计</h3>
+        <div class="stat-row"><span>初一/二/三/四</span><span class="stat-value" id="gradeDisplay">120/110/100/90</span></div>
+        <div class="stat-row"><span>教师 (高/中/普)</span><span class="stat-value" id="teacherDisplay">2/8/30</span></div>
+        <div class="stat-row"><span>教室容量</span><span class="stat-value" id="capacityDisplay">420 / 800</span></div>
+    </div>
+
+    <div class="card">
+        <h3>🏢 设施等级</h3>
+        <div class="stat-row"><span>教学楼</span><span class="stat-value" id="facilityClass">2</span></div>
+        <div class="stat-row"><span>实验室</span><span class="stat-value" id="facilityLab">1</span></div>
+        <div class="stat-row"><span>运动场</span><span class="stat-value" id="facilityGym">1</span></div>
+    </div>
+</div>
+
+<!-- 主内容区 -->
+<div class="main">
+    <div class="warning-banner" id="warningBanner">⚠️ 警告：下季度资金将告急！</div>
+    
+    <button id="nextQuarterBtn" class="btn-success" style="font-size:1.3rem; padding:1rem;">⏩ 进入下个季度 (3个月)</button>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('ops')">📋 日常运营</div>
+        <div class="tab" onclick="switchTab('rd')">🔬 教研中心</div>
+        <div class="tab" onclick="switchTab('hr')">👥 人事招聘</div>
+        <div class="tab" onclick="switchTab('edu')">📚 课程/合作</div>
+    </div>
+
+    <!-- 日常运营面板 -->
+    <div id="panel-ops" class="panel active">
+        <div class="card">
+            <h3>📢 资源转化 (消耗10行动力)</h3>
+            <div class="action-grid">
+                <button onclick="game.convert('rd')">→ +10 教研</button>
+                <button onclick="game.convert('acad')">→ +10 学术</button>
+                <button onclick="game.convert('comm')">→ +10 家委</button>
+                <button class="btn-warning" onclick="game.fundraising()">🏦 家长募捐 (50行动力, 声誉↓)</button>
+            </div>
+            <p class="text-secondary" style="margin-top:0.5rem;">募捐收入 = 学生总数 × (声誉+1) × 300</p>
+        </div>
+
+        <div class="card">
+            <h3>🏆 校园活动 (提升下季度增长)</h3>
+            <div class="action-grid">
+                <button onclick="game.activity('sports')">🏅 运动会 ($20k, 学术40) 增长x1.1</button>
+                <button onclick="game.activity('science')">🔭 科技节 ($50k, 学术80) 增长x1.15 +声誉</button>
+                <button onclick="game.activity('art')">🎨 艺术节 ($30k, 社区40) 增长x1.1 +家委</button>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>📝 招生宣传 (增加下季度新生)</h3>
+            <div class="action-grid">
+                <button onclick="game.recruit('mild')">普通宣传 ($20k, -30学术) +10~30新生</button>
+                <button onclick="game.recruit('aggro')">强力宣传 ($60k, -80学术) +40~80新生</button>
+            </div>
+        </div>
+
+        <!-- 新增赚钱途径 -->
+        <div class="card">
+            <h3>💼 商业合作</h3>
+            <div class="action-grid">
+                <button onclick="game.cooperation()">🏢 校企合作 (50行动力, 100家委) 获$200k + 季度赞助</button>
+                <button onclick="game.contest()">🏆 承办竞赛 (60行动力, 200学术) 获$150k + 声誉</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 教研中心 -->
+    <div id="panel-rd" class="panel">
+        <div class="card" id="researchList"></div>
+        <div class="card">
+            <h3>🏗️ 设施升级</h3>
+            <div class="action-grid">
+                <button onclick="game.upgradeFacility('classroom')">教学楼升级</button>
+                <button onclick="game.upgradeFacility('lab')">实验室升级</button>
+                <button onclick="game.upgradeFacility('gym')">运动场升级</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 人事招聘 -->
+    <div id="panel-hr" class="panel">
+        <div class="card">
+            <h3>招聘教师 (消耗10行动力)</h3>
+            <p>教研产出: <span id="prodRd">0</span>/月 | 学术产出: <span id="prodAcad">0</span>/月 | 家委产出: <span id="prodComm">0</span>/月</p>
+            <div class="action-grid">
+                <button onclick="game.hire('low')">普通教师 ($8k, +10教研)</button>
+                <button onclick="game.hire('mid')">高级教师 ($15k, +30教研, +10学术)</button>
+                <button onclick="game.hire('high')">特级教师 ($30k, +80教研, +40学术)</button>
+                <button onclick="game.hire('acadAssist')">教研助理 ($6k, +30学术)</button>
+                <button onclick="game.hire('acadCoach')">竞赛教练 ($20k, +150学术)</button>
+                <button onclick="game.hire('commParent')">家委代表 ($3k, +30社区)</button>
+                <button onclick="game.hire('commLiaison')">家校联络员 ($12k, +120社区)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 课程/合作 -->
+    <div id="panel-edu" class="panel">
+        <div class="card" id="courseList"></div>
+    </div>
+
+    <div class="log-area" id="log"></div>
+</div>
+
+<script>
+(function() {
+    // ---------- 游戏常量 (平衡版，经手动模拟) ----------
+    const START_YEAR = 1994;
+    const START_MONTH = 9; // 9月秋季
+    const TOTAL_QUARTERS = 128; // 1994秋～2026夏
+
+    // 财政参数 (平衡后：基础季度亏损约18万，必须运营)
+    const BASE_GRANT = 300000;          // 政府季度拨款 30万
+    const TUITION_PER_STUDENT = 2000;   // 生均学费/季度 2千 → 420学生得84万
+    const SALARY = {                    // 月薪 (单位: 元) 合理水平
+        low: 8000,
+        mid: 15000,
+        high: 30000,
+        acadAssist: 6000,
+        acadCoach: 20000,
+        commParent: 3000,
+        commLiaison: 12000
+    };
+    const PRODUCE = {
+        low: { rd:10, acad:0, comm:0 },
+        mid: { rd:30, acad:10, comm:0 },
+        high: { rd:80, acad:40, comm:5 },
+        acadAssist: { rd:0, acad:30, comm:0 },
+        acadCoach: { rd:0, acad:150, comm:10 },
+        commParent: { rd:0, acad:0, comm:30 },
+        commLiaison: { rd:5, acad:5, comm:120 }
+    };
+    // 设施季度维护费
+    const FACILITY_MAINT = {
+        classroomBase: 30000,
+        classroomPerLevel: 10000,
+        labBase: 15000,
+        labPerLevel: 8000,
+        gymBase: 12000,
+        gymPerLevel: 6000
+    };
+    const FACILITY_CAPACITY_BASE = 400; // 每级+200
+
+    // 研发项目
+    const RESEARCH = [
+        { id: 'basic', name: '基础课程', cost: 50000, rd: 100, maintAcad: 20, desc: '解锁课后辅导班' },
+        { id: 'advanced', name: '拓展课程', cost: 150000, rd: 300, maintAcad: 50, desc: '提高学术转化' },
+        { id: 'international', name: '国际部', cost: 500000, rd: 800, maintAcad: 120, maintComm: 30, desc: '大幅增加学费' },
+        { id: 'gifted', name: '资优生计划', cost: 300000, rd: 500, maintAcad: 80, desc: '提升声誉与竞赛生' }
+    ];
+
+    // 课程 (收益合理)
+    const COURSES = [
+        { id: 'tutorial', name: '课后辅导班', reqMoney: 40000, reqAcad: 40, incomeBase: 100000, maxLevel: 3, costBase: 60000, acadBase: 50, cooldown: 2, season: [9,10,11,12,3,4,5] },
+        { id: 'olympiad', name: '奥赛集训', reqMoney: 120000, reqAcad: 150, incomeBase: 250000, maxLevel: 5, costBase: 150000, acadBase: 120, cooldown: 3, season: [7,8,9,10] },
+        { id: 'summer', name: '夏令营', reqMoney: 80000, reqAcad: 80, incomeBase: 180000, maxLevel: 3, costBase: 100000, acadBase: 80, cooldown: 2, season: [7,8] }
+    ];
+
+    // 招聘人数上限
+    const HIRING_LIMITS = {
+        low: 99,
+        mid: 20,
+        high: 5,
+        acadAssist: 10,
+        acadCoach: 6,
+        commParent: 8,
+        commLiaison: 4
+    };
+
+    // ---------- 游戏状态 ----------
+    const game = {
+        year: 1994,
+        month: 9,
+        money: 1000000,          // 初始资金100万
+        ap: 300,
+
+        resources: { rd: 0, acad: 0, comm: 0 },
+
+        // 学生分年级 [初一, 初二, 初三, 初四] (五四制)
+        students: [120, 110, 100, 90],  // 总数420
+
+        teachers: {
+            low: 30,
+            mid: 8,
+            high: 2,
+            acadAssist: 0,
+            acadCoach: 0,
+            commParent: 0,
+            commLiaison: 0
+        },
+
+        facility: {
+            classroom: 2,
+            lab: 1,
+            gym: 1
+        },
+
+        research: {
+            basic: false,
+            advanced: false,
+            international: false,
+            gifted: false
+        },
+
+        courses: {
+            tutorial: { level:1, cooldown:0 },
+            olympiad: { level:1, cooldown:0 },
+            summer: { level:1, cooldown:0 }
+        },
+
+        stats: {
+            reputation: 0.5,
+            crisisCount: 0,
+            growthMult: 1.0,
+            pendingRecruits: 0,
+            tempRepPenalty: 0,
+            sponsorship: 0
+        },
+
+        getTotalStudents() {
+            return this.students[0] + this.students[1] + this.students[2] + this.students[3];
+        },
+
+        getClassroomCapacity() {
+            return 400 + (this.facility.classroom - 1) * 200;
+        }
+    };
+
+    // ---------- UI 更新 ----------
+    const ui = {
+        log(msg, type='') {
+            const div = document.createElement('div');
+            div.className = 'log-entry ' + (type ? 'log-'+type : '');
+            div.textContent = `[${game.year}-${String(game.month).padStart(2,'0')}] ${msg}`;
+            document.getElementById('log').appendChild(div);
+            document.getElementById('log').scrollTop = 1e9;
+        },
+
+        updateAll() {
+            const seasonNames = ['秋', '冬', '春', '夏'];
+            const season = seasonNames[Math.floor((game.month-1)/3) % 4];
+            document.getElementById('dateDisplay').innerText = `${game.year} ${season}`;
+            document.getElementById('moneyDisplay').innerText = Math.floor(game.money).toLocaleString();
+            document.getElementById('repDisplay').innerText = game.stats.reputation.toFixed(2);
+            document.getElementById('repBar').style.width = (game.stats.reputation * 100) + '%';
+            document.getElementById('crisisCount').innerText = game.stats.crisisCount + ' / 5';
+
+            document.getElementById('apDisplay').innerText = game.ap;
+            document.getElementById('rdDisplay').innerText = Math.floor(game.resources.rd);
+            document.getElementById('acadDisplay').innerText = Math.floor(game.resources.acad);
+            document.getElementById('commDisplay').innerText = Math.floor(game.resources.comm);
+
+            const total = game.getTotalStudents();
+            document.getElementById('gradeDisplay').innerText = game.students.join('/');
+            document.getElementById('teacherDisplay').innerText = `${game.teachers.high}/${game.teachers.mid}/${game.teachers.low}`;
+            document.getElementById('capacityDisplay').innerText = `${total} / ${game.getClassroomCapacity()}`;
+
+            document.getElementById('facilityClass').innerText = game.facility.classroom;
+            document.getElementById('facilityLab').innerText = game.facility.lab;
+            document.getElementById('facilityGym').innerText = game.facility.gym;
+
+            // 预测 (季度)
+            const salary = this.calcQuarterlySalary();
+            const maint = this.calcQuarterlyMaint();
+            const income = BASE_GRANT + total * TUITION_PER_STUDENT + game.stats.sponsorship;
+            const net = income - salary - maint;
+            document.getElementById('fcIncome').innerText = '+' + Math.floor(income).toLocaleString();
+            document.getElementById('fcSalary').innerText = '-' + Math.floor(salary).toLocaleString();
+            document.getElementById('fcMaint').innerText = '-' + Math.floor(maint).toLocaleString();
+            document.getElementById('fcNet').innerText = (net>=0?'+':'') + Math.floor(net).toLocaleString();
+            document.getElementById('fcNet').style.color = net>=0 ? 'var(--success)' : 'var(--danger)';
+
+            if (game.money + net < 0) {
+                document.getElementById('warningBanner').style.display = 'block';
+            } else {
+                document.getElementById('warningBanner').style.display = 'none';
+            }
+
+            let prodRd=0, prodAcad=0, prodComm=0;
+            for (let [k, cnt] of Object.entries(game.teachers)) {
+                const p = PRODUCE[k];
+                if (p) {
+                    prodRd += cnt * (p.rd||0);
+                    prodAcad += cnt * (p.acad||0);
+                    prodComm += cnt * (p.comm||0);
+                }
+            }
+            document.getElementById('prodRd').innerText = prodRd;
+            document.getElementById('prodAcad').innerText = prodAcad;
+            document.getElementById('prodComm').innerText = prodComm;
+
+            this.renderResearch();
+            this.renderCourses();
+        },
+
+        calcQuarterlySalary() {
+            let sum = 0;
+            for (let [k, cnt] of Object.entries(game.teachers)) {
+                sum += cnt * (SALARY[k] || 0);
+            }
+            return sum * 3;
+        },
+
+        calcQuarterlyMaint() {
+            let m = 0;
+            m += FACILITY_MAINT.classroomBase + (game.facility.classroom-1) * FACILITY_MAINT.classroomPerLevel;
+            m += FACILITY_MAINT.labBase + (game.facility.lab-1) * FACILITY_MAINT.labPerLevel;
+            m += FACILITY_MAINT.gymBase + (game.facility.gym-1) * FACILITY_MAINT.gymPerLevel;
+            return m;
+        },
+
+        renderResearch() {
+            const container = document.getElementById('researchList');
+            let html = '<h3>📚 教学研究</h3>';
+            RESEARCH.forEach(r => {
+                const unlocked = game.research[r.id];
+                html += `<div style="background:var(--surface); padding:1rem; border-radius:16px; margin-bottom:0.8rem; border-left:5px solid ${unlocked?'var(--success)':'var(--primary)'}">
+                    <div style="display:flex; justify-content:space-between; align-items:center">
+                        <span><strong>${r.name}</strong></span>
+                        ${unlocked ? '<span>✅ 已完成</span>' : `<button class="btn-small" onclick="game.doResearch('${r.id}')">研发 ($${r.cost/1000}k / ${r.rd}教研)</button>`}
+                    </div>
+                    <div style="font-size:0.85rem; color:var(--text-secondary); margin-top:0.3rem;">${r.desc}</div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        },
+
+        renderCourses() {
+            if (!game.research.basic) {
+                document.getElementById('courseList').innerHTML = '<div class="card">请先研发「基础课程」</div>';
+                return;
+            }
+            let html = '<h3>🏫 特色课程</h3>';
+            COURSES.forEach(c => {
+                const st = game.courses[c.id];
+                const canRun = st.cooldown === 0 && c.season.includes(game.month);
+                html += `<div class="edu-item">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span><strong>${c.name} Lv.${st.level}</strong></span>
+                        <span>冷却: ${st.cooldown}月</span>
+                    </div>
+                    <div style="font-size:0.9rem; margin:0.5rem 0;">开课: $${c.reqMoney/1000}k + 学术${c.reqAcad} | 收入: $${(c.incomeBase * st.level)/1000}k</div>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button class="btn-small" ${canRun ? '' : 'disabled'} onclick="game.runCourse('${c.id}')">开课</button>
+                        <button class="btn-small" ${st.level < c.maxLevel ? '' : 'disabled'} onclick="game.upgradeCourse('${c.id}')">升级 ($${c.costBase*st.level/1000}k / 学术${c.acadBase*st.level})</button>
+                    </div>
+                </div>`;
+            });
+            document.getElementById('courseList').innerHTML = html;
+        }
+    };
+
+    // ---------- 核心逻辑 ----------
+    game.nextQuarter = function() {
+        for (let i = 0; i < 3; i++) {
+            this.month++;
+            if (this.month > 12) {
+                this.month = 1;
+                this.year++;
+            }
+            // 毕业季：6月（初四毕业）
+            if (this.month === 6) {
+                const graduates = this.students[3];
+                // 初四毕业，其他年级依次上升
+                this.students[3] = this.students[2];
+                this.students[2] = this.students[1];
+                this.students[1] = this.students[0];
+                // 初一新生：基础+宣传+声誉
+                let newStudents = Math.floor(60 + this.stats.reputation * 50 + Math.random() * 30);
+                if (this.stats.pendingRecruits > 0) {
+                    newStudents += this.stats.pendingRecruits;
+                    this.stats.pendingRecruits = 0;
+                }
+                // 容量限制
+                const capacity = this.getClassroomCapacity();
+                const totalAfter = this.students[1] + this.students[2] + this.students[3] + newStudents;
+                if (totalAfter > capacity) {
+                    newStudents = capacity - (this.students[1] + this.students[2] + this.students[3]);
+                    if (newStudents < 0) newStudents = 0;
+                }
+                this.students[0] = newStudents;
+                ui.log(`🎓 初四毕业 ${graduates} 人，新初一入学 ${newStudents} 人`, 'good');
+            }
+
+            this._monthlyProcess();
+        }
+
+        // 季度赞助收入（校企合作持续收益）
+        if (this.stats.sponsorship > 0) {
+            this.money += this.stats.sponsorship;
+            ui.log(`获得季度赞助 $${this.stats.sponsorship}`, 'good');
+        }
+
+        this.ap = 300;
+        ui.log(`=== 新季度开始，行动力重置 ===`, 'warn');
+        ui.updateAll();
+
+        if (this.year > 2026 || (this.year === 2026 && this.month >= 7)) {
+            alert('🎉 恭喜！您成功运营至2026年夏季！');
+            document.getElementById('nextQuarterBtn').disabled = true;
+        }
+    };
+
+    game._monthlyProcess = function() {
+        const total = this.getTotalStudents();
+        // 收入 (月度)
+        const tuition = total * TUITION_PER_STUDENT / 3;
+        const grant = BASE_GRANT / 3;
+        this.money += tuition + grant;
+
+        // 工资
+        let salary = 0;
+        for (let [k, cnt] of Object.entries(this.teachers)) {
+            salary += cnt * (SALARY[k] || 0);
+        }
+        this.money -= salary;
+
+        // 维护
+        let maint = 0;
+        maint += (FACILITY_MAINT.classroomBase + (this.facility.classroom-1) * FACILITY_MAINT.classroomPerLevel) / 3;
+        maint += (FACILITY_MAINT.labBase + (this.facility.lab-1) * FACILITY_MAINT.labPerLevel) / 3;
+        maint += (FACILITY_MAINT.gymBase + (this.facility.gym-1) * FACILITY_MAINT.gymPerLevel) / 3;
+        this.money -= maint;
+
+        // 资源产出
+        let prodRd=0, prodAcad=0, prodComm=0;
+        for (let [k, cnt] of Object.entries(this.teachers)) {
+            const p = PRODUCE[k];
+            if (p) {
+                prodRd += cnt * (p.rd||0);
+                prodAcad += cnt * (p.acad||0);
+                prodComm += cnt * (p.comm||0);
+            }
+        }
+        this.resources.rd += prodRd;
+        this.resources.acad += prodAcad;
+        this.resources.comm += prodComm;
+
+        // 研发维护
+        let maintAcad=0, maintComm=0;
+        if (this.research.basic) maintAcad += 20/3;
+        if (this.research.advanced) maintAcad += 50/3;
+        if (this.research.international) { maintAcad += 120/3; maintComm += 30/3; }
+        if (this.research.gifted) maintAcad += 80/3;
+        this.resources.acad -= maintAcad;
+        this.resources.comm -= maintComm;
+
+        // 危机检查
+        let crisis = false;
+        if (this.resources.acad < -50 || this.resources.comm < -30) {
+            crisis = true;
+            this.students[0] = Math.max(0, this.students[0] - 5);
+            ui.log('资源匮乏，5名学生转学', 'bad');
+        }
+        if (this.stats.reputation < 0.2) {
+            crisis = true;
+            this.students[1] = Math.max(0, this.students[1] - 3);
+            ui.log('声誉过低，3名优等生转学', 'bad');
+        }
+        if (crisis) {
+            this.stats.crisisCount++;
+            if (this.stats.crisisCount >= 5) {
+                alert('连续5个月发生危机，学校关闭！');
+                document.getElementById('nextQuarterBtn').disabled = true;
+            }
+        } else {
+            this.stats.crisisCount = Math.max(0, this.stats.crisisCount - 1);
+        }
+
+        // 声誉
+        let repDelta = 0.001;
+        if (this.research.gifted) repDelta += 0.002;
+        if (this.facility.lab > 1) repDelta += 0.001;
+        this.stats.reputation = Math.min(1, Math.max(0, this.stats.reputation + repDelta - 0.001));
+        if (this.stats.tempRepPenalty > 0) {
+            this.stats.reputation -= this.stats.tempRepPenalty;
+            this.stats.tempRepPenalty = Math.max(0, this.stats.tempRepPenalty - 0.005);
+        }
+
+        if (this.money < 0) {
+            alert('资金链断裂，学校破产！');
+            document.getElementById('nextQuarterBtn').disabled = true;
+        }
+    };
+
+    // ---------- 操作函数 ----------
+    game.convert = function(target) {
+        if (this.ap < 10) { ui.log('行动力不足', 'bad'); return; }
+        this.ap -= 10;
+        this.resources[target] += 10;
+        ui.log(`转化: 10AP → 10 ${target}`, 'good');
+        ui.updateAll();
+    };
+
+    game.fundraising = function() {
+        if (this.ap < 50) return;
+        this.ap -= 50;
+        const total = this.getTotalStudents();
+        const gain = Math.floor(total * (this.stats.reputation + 1) * 300);
+        this.money += gain;
+        this.stats.reputation = Math.max(0, this.stats.reputation - 0.03);
+        ui.log(`募捐获得 $${gain.toLocaleString()}，声誉下降`, 'warn');
+        ui.updateAll();
+    };
+
+    game.activity = function(type) {
+        let cost, acad, comm, mult, repGain=0;
+        if (type === 'sports') { cost=20000; acad=40; mult=1.1; }
+        else if (type === 'science') { cost=50000; acad=80; mult=1.15; repGain=0.01; }
+        else if (type === 'art') { cost=30000; comm=40; mult=1.1; }
+        if (this.money < cost || this.resources.acad < acad || this.resources.comm < comm) return;
+        this.money -= cost;
+        this.resources.acad -= acad;
+        this.resources.comm -= comm;
+        this.stats.growthMult = mult;
+        if (repGain) this.stats.reputation = Math.min(1, this.stats.reputation + repGain);
+        ui.log(`举办活动，下季度新生增长 x${mult}`, 'good');
+        ui.updateAll();
+    };
+
+    game.recruit = function(type) {
+        let cost, acad, minBonus, maxBonus;
+        if (type === 'mild') { cost=20000; acad=30; minBonus=10; maxBonus=30; }
+        else { cost=60000; acad=80; minBonus=40; maxBonus=80; }
+        if (this.money < cost || this.resources.acad < acad) return;
+        this.money -= cost;
+        this.resources.acad -= acad;
+        const bonus = Math.floor(Math.random() * (maxBonus - minBonus + 1)) + minBonus;
+        this.stats.pendingRecruits += bonus;
+        ui.log(`招生宣传，下季度新生 +${bonus}`, 'good');
+        ui.updateAll();
+    };
+
+    game.cooperation = function() {
+        if (this.ap < 50 || this.resources.comm < 100) { ui.log('行动力或家委点不足', 'bad'); return; }
+        this.ap -= 50;
+        this.resources.comm -= 100;
+        const lump = 200000;
+        this.money += lump;
+        this.stats.sponsorship = 30000; // 每季度3万
+        ui.log(`校企合作成功！获得 $${lump/1000}k 赞助，今后每季度 +$${this.stats.sponsorship}`, 'good');
+        ui.updateAll();
+    };
+
+    game.contest = function() {
+        if (this.ap < 60 || this.resources.acad < 200) { ui.log('行动力或学术点不足', 'bad'); return; }
+        this.ap -= 60;
+        this.resources.acad -= 200;
+        const prize = 150000;
+        this.money += prize;
+        this.stats.reputation = Math.min(1, this.stats.reputation + 0.05);
+        ui.log(`承办竞赛成功！获得奖金 $${prize/1000}k，声誉+0.05`, 'good');
+        ui.updateAll();
+    };
+
+    game.hire = function(type) {
+        if (this.ap < 10) return;
+        if (this.teachers[type] >= HIRING_LIMITS[type]) { ui.log('岗位已满', 'bad'); return; }
+        this.teachers[type] = (this.teachers[type] || 0) + 1;
+        this.ap -= 10;
+        ui.log(`招聘成功: ${type}`, 'good');
+        ui.updateAll();
+    };
+
+    game.doResearch = function(id) {
+        const r = RESEARCH.find(x => x.id === id);
+        if (!r) return;
+        if (this.money < r.cost || this.resources.rd < r.rd) { ui.log('资源不足', 'bad'); return; }
+        this.money -= r.cost;
+        this.resources.rd -= r.rd;
+        this.research[id] = true;
+        ui.log(`研发完成: ${r.name}`, 'good');
+        ui.updateAll();
+    };
+
+    game.upgradeFacility = function(type) {
+        let cost, rdCost=50;
+        if (type === 'classroom') {
+            cost = 200000 + (this.facility.classroom - 1) * 150000;
+        } else if (type === 'lab') {
+            cost = 150000 + (this.facility.lab - 1) * 100000;
+        } else {
+            cost = 120000 + (this.facility.gym - 1) * 80000;
+        }
+        if (this.money < cost || this.resources.rd < rdCost) return;
+        this.money -= cost;
+        this.resources.rd -= rdCost;
+        this.facility[type]++;
+        ui.log(`${type} 升级至等级 ${this.facility[type]}`, 'good');
+        ui.updateAll();
+    };
+
+    game.runCourse = function(id) {
+        const c = COURSES.find(x => x.id === id);
+        const st = this.courses[id];
+        if (!c || st.cooldown > 0) return;
+        if (!c.season.includes(this.month)) { ui.log('当前季节不能开课', 'bad'); return; }
+        if (this.money < c.reqMoney || this.resources.acad < c.reqAcad) return;
+        this.money -= c.reqMoney;
+        this.resources.acad -= c.reqAcad;
+        this.money += c.incomeBase * st.level;
+        st.cooldown = c.cooldown;
+        ui.log(`开课: ${c.name} 收入 +${(c.incomeBase * st.level)/1000}k`, 'good');
+        ui.updateAll();
+    };
+
+    game.upgradeCourse = function(id) {
+        const c = COURSES.find(x => x.id === id);
+        const st = this.courses[id];
+        if (!c || st.level >= c.maxLevel) return;
+        const costMoney = c.costBase * st.level;
+        const costAcad = c.acadBase * st.level;
+        if (this.money < costMoney || this.resources.acad < costAcad) return;
+        this.money -= costMoney;
+        this.resources.acad -= costAcad;
+        st.level++;
+        ui.log(`${c.name} 升级至 Lv.${st.level}`, 'good');
+        ui.updateAll();
+    };
+
+    // 初始化
+    window.game = game;
+    window.ui = ui;
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        document.body.classList.toggle('light');
+    });
+
+    window.switchTab = function(tab) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        event.target.classList.add('active');
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.getElementById('panel-'+tab).classList.add('active');
+    };
+
+    document.getElementById('nextQuarterBtn').addEventListener('click', () => game.nextQuarter());
+
+    ui.updateAll();
+    ui.log('游戏开始，目标：运营至2026年夏季。数值已手动模拟平衡，不主动运营将逐渐破产。', 'good');
+})();
+</script>
+</body>
+</html>
